@@ -62,8 +62,8 @@ def main():
     if 'comm_rows' not in st.session_state: st.session_state.comm_rows = 1
 
     c1, c2 = st.columns(2)
-    with c1: project_name = st.text_input("Project Name / Site Address", placeholder="e.g. Venus Green Enclave")
-    with c2: developer_name = st.text_input("Developer Name", placeholder="e.g. Er. Anuj Narang")
+    with c1: project_name = st.text_input("Project Name / Site Address", placeholder="e.g. Canal Colony")
+    with c2: developer_name = st.text_input("Developer Name", placeholder="e.g. Er. ADA/PUDA")
 
     all_calculated_items = []
     tab_res, tab_comm, tab_services = st.tabs(["🏡 Residential (40%)", "🏢 Commercial (50%)", "🛠️ Public Utilities"])
