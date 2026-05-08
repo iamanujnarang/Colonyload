@@ -26,8 +26,8 @@ st.markdown("""
     .footer-container { text-align: center; margin-top: 80px; padding: 40px 20px; border-top: 1px solid #ddd; background: white; }
     .social-icon { width: 30px; margin: 0 10px; transition: 0.3s; }
     .social-icon:hover { transform: scale(1.2); }
-    .beeclue-box { background: #1e293b; padding: 20px; border-radius: 12px; display: inline-block; margin-top: 20px; }
-    .powered-text { color: #94a3b8; font-size: 0.7rem; letter-spacing: 2px; margin-bottom: 10px; text-transform: uppercase; }
+    .beeclue-box { background: #1e293b; padding: 25px; border-radius: 12px; display: inline-block; margin-top: 20px; text-align: center; }
+    .powered-text { color: #94a3b8; font-size: 0.7rem; letter-spacing: 2px; margin-bottom: 15px; text-transform: uppercase; }
     
     .summary-card { background: white; padding: 20px; border-radius: 15px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
     </style>
@@ -53,9 +53,6 @@ def get_dt_combination(target_kva):
                 break
     return combination
 
-def format_indian(num):
-    return "{:,.2f}".format(num)
-
 # ==========================================
 # 3. MAIN APPLICATION
 # ==========================================
@@ -66,22 +63,22 @@ def main():
     st.markdown('<p style="text-align: center; color: #64748b;">Official Framework as per Supply Code 2024 (Reg. 12)</p>', unsafe_allow_html=True)
     st.divider()
 
-    # Session State for Dynamic Rows
+    # Session State for Dynamic Rows for STP/Utilities
     if 'service_rows' not in st.session_state:
         st.session_state.service_rows = 1
 
-    # Basic Project Data
+    # Project Data
     c1, c2 = st.columns(2)
     with c1:
-        project_name = st.text_input("Project Name / Site Address", placeholder="e.g. Omaxe City, Extension-1")
+        project_name = st.text_input("Project Name / Site Address", placeholder="e.g. Venus Green Enclave")
     with c2:
-        developer_name = st.text_input("Developer / Promoter Name", placeholder="e.g. ABC Infrastructure Pvt Ltd")
+        developer_name = st.text_input("Developer Name", placeholder="e.g. Er. Anuj Narang Builders")
 
-    # Load Database List
+    # Final data list
     all_calculated_items = []
 
     # UI Tabs
-    tab_res, tab_comm, tab_services = st.tabs(["🏡 Residential (40%)", "🏢 Commercial (50%)", "🛠️ Common Services (Custom Factor)"])
+    tab_res, tab_comm, tab_services = st.tabs(["🏡 Residential (40%)", "🏢 Commercial (50%)", "🛠️ STP & Public Services"])
 
     # --- RESIDENTIAL TAB ---
     with tab_res:
@@ -114,30 +111,34 @@ def main():
 
     # --- COMMERCIAL TAB ---
     with tab_comm:
-        with st.expander("🛍️ Enter Commercial Space Details", expanded=False):
-            shop_qty = st.number_input("Number of Shops/Showrooms (Upto 50 Sq. Yards) [10 kW per Floor]", min_value=0, step=1)
+        with st.expander("🛍️ Enter Commercial Details", expanded=False):
+            shop_qty = st.number_input("Number of Shops (Upto 50 SY) [10 kW per Floor]", min_value=0, step=1)
             if shop_qty > 0:
-                all_calculated_items.append({"Description": "Shops/Showrooms (Upto 50 SY)", "Norms": 10.0, "Qty": shop_qty, "Factor": 0.50, "Type": "Commercial"})
+                all_calculated_items.append({"Description": "Shops (Upto 50 SY)", "Norms": 10.0, "Qty": shop_qty, "Factor": 0.50, "Type": "Commercial"})
             
-            comm_area = st.number_input("Commercial Area (Above 50 Sq. Yards) in Sq. Yards [175 Watt/Sq. Yard]", min_value=0.0)
+            comm_area = st.number_input("Commercial Plot Area (Above 50 SY) [175 Watt/SY]", min_value=0.0)
             if comm_area > 0:
                 load_comm = (comm_area * 175) / 1000
-                all_calculated_items.append({"Description": "Large Commercial Area", "Norms": load_comm, "Qty": 1, "Factor": 0.50, "Type": "Commercial"})
+                all_calculated_items.append({"Description": "Commercial Area Plot", "Norms": load_comm, "Qty": 1, "Factor": 0.50, "Type": "Commercial"})
 
-    # --- COMMON SERVICES TAB (Dynamic) ---
+    # --- DYNAMIC STP & PUBLIC SERVICES TAB ---
     with tab_services:
-        st.subheader("Public Utilities & Common Services")
+        st.info("💡 Add public utility loads like STP, Street Lights, or Water Works with manual factors.")
         for i in range(st.session_state.service_rows):
-            sc1, sc2, sc3, sc4 = st.columns([3, 2, 2, 2])
-            with sc1: desc = st.text_input(f"Service Name {i+1}", value="", key=f"s_name_{i}", placeholder="e.g. STP / Street Light")
-            with sc2: s_load = st.number_input(f"Load (kW)", min_value=0.0, key=f"s_load_{i}")
-            with sc3: s_qty = st.number_input(f"Qty", min_value=0, step=1, key=f"s_qty_{i}", value=1)
-            with sc4: s_fac = st.number_input(f"Demand Factor", min_value=0.0, max_value=1.0, value=1.0, key=f"s_fac_{i}")
+            sc1, sc2, sc3, sc4 = st.columns([3, 2, 1, 2])
+            with sc1: 
+                desc = st.text_input(f"Public Service Name {i+1}", key=f"sn_{i}", placeholder="e.g. STP")
+            with sc2: 
+                s_load = st.number_input(f"Load (kW) for {i+1}", min_value=0.0, key=f"sl_{i}")
+            with sc3: 
+                s_qty = st.number_input(f"Qty {i+1}", min_value=0, step=1, key=f"sq_{i}", value=1)
+            with sc4: 
+                s_fac = st.number_input(f"Demand Factor {i+1}", min_value=0.0, max_value=1.0, value=1.0, key=f"sf_{i}")
             
-            if desc and s_load > 0 and s_qty > 0:
+            if desc and s_load > 0:
                 all_calculated_items.append({"Description": desc, "Norms": s_load, "Qty": s_qty, "Factor": s_fac, "Type": "Utility"})
 
-        if st.button("➕ Add Another Service"):
+        if st.button("➕ Add Another Public Service Row"):
             st.session_state.service_rows += 1
             st.rerun()
 
@@ -146,129 +147,101 @@ def main():
     # ==========================================
     if all_calculated_items:
         df = pd.DataFrame(all_calculated_items)
-        df['Total kW'] = df['Norms'] * df['Qty']
-        df['Net Load'] = df['Total kW'] * df['Factor']
+        df['Total_Load_kW'] = df['Norms'] * df['Qty']
+        df['Net_Load_kW'] = df['Total_Load_kW'] * df['Factor']
 
-        # Aggregates
-        total_residential_kw = df[df['Type'] == 'Residential']['Total kW'].sum()
-        total_commercial_kw = df[df['Type'] == 'Commercial']['Total kW'].sum()
-        
-        grand_total_net_kw = df['Net Load'].sum()
+        grand_total_net_kw = df['Net_Load_kW'].sum()
         total_kva = grand_total_net_kw / 0.95
 
-        # Results Summary
         st.divider()
-        st.header("📋 Assessment Result")
+        st.header("📋 Assessment Preview")
         
-        # Display Table
+        # Table UI
         display_df = df.copy()
-        display_df.index = range(1, len(display_df) + 1)
-        st.table(display_df[['Description', 'Norms', 'Qty', 'Total kW', 'Factor', 'Net Load']])
+        display_df['Norms'] = display_df['Norms'].apply(lambda x: f"{x} kW")
+        st.table(display_df[['Description', 'Norms', 'Qty', 'Total_Load_kW', 'Factor', 'Net_Load_kW']].rename(
+            columns={'Total_Load_kW': 'Total Load (kW)', 'Net_Load_kW': 'Net Load (After Factor)'}
+        ))
 
-        # Summary Metrics
+        # Metrics
         m1, m2, m3 = st.columns(3)
-        with m1:
-            st.markdown(f'<div class="summary-card"><h5>Net Colony Load</h5><h2>{grand_total_net_kw:.2f} kW</h2></div>', unsafe_allow_html=True)
-        with m2:
-            st.markdown(f'<div class="summary-card"><h5>Total kVA (0.95 PF)</h5><h2 style="color: #0b79d0;">{total_kva:.2f} kVA</h2></div>', unsafe_allow_html=True)
-        with m3:
-            dt_req = math.ceil(total_kva)
-            st.markdown(f'<div class="summary-card"><h5>DT Capacity Needed</h5><h2>{dt_req} kVA</h2></div>', unsafe_allow_html=True)
+        with m1: st.markdown(f'<div class="summary-card"><h5>Net Colony Load</h5><h2>{grand_total_net_kw:.2f} kW</h2></div>', unsafe_allow_html=True)
+        with m2: st.markdown(f'<div class="summary-card"><h5>Total kVA (0.95 PF)</h5><h2 style="color: #0b79d0;">{total_kva:.2f} kVA</h2></div>', unsafe_allow_html=True)
+        with m3: st.markdown(f'<div class="summary-card"><h5>Total DT Capacity</h5><h2>{math.ceil(total_kva)} kVA</h2></div>', unsafe_allow_html=True)
 
-        # DT Combination Box
-        st.write("")
+        # DT Combination
         dt_combo = get_dt_combination(total_kva)
         dt_str = ", ".join([f"({v}) Nos. {k}" for k, v in dt_combo.items()])
-        st.success(f"**Recommended Transformer Configuration:** {dt_str}")
+        st.success(f"**Recommended DT Configuration (100% Loading):** {dt_str}")
 
-        # Competency Section
-        st.subheader("⚖️ NOC Competency Authority")
-        if total_kva <= 2000:
-            auth, rank = "Dy.CE / SE (DS)", "Concerned Distribution Circle"
-        elif 2000 < total_kva <= 4000:
-            auth, rank = "Chief Engineer (DS)", "Concerned Zone"
-        else:
-            auth, rank = "Chief Engineer (Commercial)", "PSPCL HQ, Patiala"
-        
-        st.info(f"The approving authority for this NOC is **{auth}**, {rank}.")
+        # Authority
+        if total_kva <= 2000: auth = "Dy.CE / SE (DS) Concerned Circle"
+        elif 2000 < total_kva <= 4000: auth = "Chief Engineer (DS) Concerned Zone"
+        else: auth = "Chief Engineer (Commercial) PSPCL, Patiala"
+        st.info(f"**NOC Approving Authority:** {auth}")
 
         # ==========================================
-        # 5. EXCEL EXPORT (YOUR SPECIFIC FORMAT)
+        # 5. EXCEL EXPORT (FIXED FOR CORRECT FORMAT)
         # ==========================================
         output = BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             workbook = writer.book
-            worksheet = workbook.add_worksheet('Load Sheet')
+            worksheet = workbook.add_worksheet('Load Assessment')
             
-            # Formatting
-            fmt_header = workbook.add_format({'bold': True, 'bg_color': '#0b79d0', 'font_color': 'white', 'border': 1, 'align': 'center'})
-            fmt_cell = workbook.add_format({'border': 1, 'align': 'center'})
-            fmt_bold = workbook.add_format({'bold': True, 'border': 1})
-            fmt_title = workbook.add_format({'bold': True, 'font_size': 14, 'align': 'center'})
+            title_fmt = workbook.add_format({'bold': True, 'font_size': 14, 'align': 'center'})
+            header_fmt = workbook.add_format({'bold': True, 'bg_color': '#0b79d0', 'font_color': 'white', 'border': 1, 'align': 'center'})
+            cell_fmt = workbook.add_format({'border': 1, 'align': 'center'})
+            bold_cell = workbook.add_format({'bold': True, 'border': 1})
 
-            # Title
-            worksheet.merge_range('A1:F1', f"LOAD CALCULATIONS FOR PROJECT: {project_name.upper()}", fmt_title)
+            worksheet.merge_range('A1:F1', f"LOAD CALCULATIONS FOR PROJECT: {project_name.upper()}", title_fmt)
             
-            # Headers
-            headers = ["Sr. No", "Description", "Norms (kW)", "Qty", "Total Load (kW)", "Net Load (After Factor)"]
-            for col, text in enumerate(headers):
-                worksheet.write(2, col, text, fmt_header)
+            headers = ["Sr. No", "Description", "Norms (kW)", "Quantity", "Total Load (kW)", "Net Load"]
+            for col, text in enumerate(headers): worksheet.write(2, col, text, header_fmt)
 
-            # Rows
-            for i, row in enumerate(df.itertuples()):
+            # Fix: Use dict access to avoid Attribute Error
+            for i, row in enumerate(df.to_dict('records')):
                 idx = i + 3
-                worksheet.write(idx, 0, i+1, fmt_cell)
-                worksheet.write(idx, 1, row.Description, fmt_cell)
-                worksheet.write(idx, 2, row.Norms, fmt_cell)
-                worksheet.write(idx, 3, row.Qty, fmt_cell)
-                worksheet.write(idx, 4, row.Total_kW, fmt_cell)
-                worksheet.write(idx, 5, row.Net_Load, fmt_cell)
+                worksheet.write(idx, 0, i+1, cell_fmt)
+                worksheet.write(idx, 1, row['Description'], cell_fmt)
+                worksheet.write(idx, 2, f"{row['Norms']} kW", cell_fmt)
+                worksheet.write(idx, 3, row['Qty'], cell_fmt)
+                worksheet.write(idx, 4, row['Total_Load_kW'], cell_fmt)
+                worksheet.write(idx, 5, row['Net_Load_kW'], cell_fmt)
 
             last_row = len(df) + 4
-            worksheet.write(last_row, 1, "Total Residential Load (kW)", fmt_bold)
-            worksheet.write(last_row, 4, total_residential_kw, fmt_bold)
-            
-            worksheet.write(last_row+1, 1, "GRAND TOTAL NET LOAD (kW)", fmt_bold)
-            worksheet.write(last_row+1, 5, grand_total_net_kw, fmt_bold)
-
-            worksheet.write(last_row+2, 1, "TOTAL LOAD IN kVA (0.95 PF)", fmt_bold)
-            worksheet.write(last_row+2, 5, round(total_kva, 2), fmt_bold)
-
-            worksheet.write(last_row+4, 1, f"Recommended DTs: {dt_str}", workbook.add_format({'bold': True, 'font_color': 'red'}))
-            worksheet.write(last_row+5, 1, f"Authority: {auth}", fmt_bold)
-
+            worksheet.write(last_row, 1, "GRAND TOTAL NET LOAD (kW)", bold_cell)
+            worksheet.write(last_row, 5, grand_total_net_kw, bold_cell)
+            worksheet.write(last_row+1, 1, "TOTAL LOAD IN kVA (0.95 PF)", bold_cell)
+            worksheet.write(last_row+1, 5, round(total_kva, 2), bold_cell)
+            worksheet.write(last_row+3, 1, f"Recommended DTs: {dt_str}", workbook.add_format({'bold': True, 'font_color': 'red'}))
+            worksheet.write(last_row+4, 1, f"Authority: {auth}", bold_cell)
             worksheet.set_column(1, 1, 35)
-            worksheet.set_column(2, 5, 15)
 
-        st.download_button(label="📥 Export Assessment to Excel", data=output.getvalue(), file_name=f"{project_name}_Assessment.xlsx")
-
-    else:
-        st.warning("Please enter at least one plot or service quantity to see results.")
+        st.download_button(label="📥 Export Assessment to Excel", data=output.getvalue(), file_name=f"{project_name}_Load_Sheet.xlsx")
 
     # ==========================================
-    # 6. FOOTER (BEECLUE & BRANDING)
+    # 6. FOOTER (BRANDING)
     # ==========================================
-    footer_html = f"""
+    st.markdown(f"""
     <div class="footer-container">
-        <div style="font-size: 1.2rem; color: #334155; margin-bottom: 20px;">
-            Made with <span style="color: #e63946;">❤️</span> by <b>Er. Anuj Narang, JE PSPCL</b>
+        <div style="font-size: 1.1rem; color: #334155; margin-bottom: 20px;">
+            Made with ❤️ by <b>Er. Anuj Narang, JE PSPCL</b>
         </div>
         <div style="margin-bottom: 25px;">
-            <a href="https://instagram.com/iamanujnarang" target="_blank"><img src="{INSTA_ICON}" class="social-icon"></a>
-            <a href="https://facebook.com/iamanujnarang" target="_blank"><img src="{FB_ICON}" class="social-icon"></a>
-            <a href="https://x.com/iamanujnarang" target="_blank"><img src="{X_ICON}" class="social-icon"></a>
-            <a href="https://linkedin.com/in/iamanujnarang" target="_blank"><img src="{LINKEDIN_ICON}" class="social-icon"></a>
+            <a href="https://instagram.com/iamanujnarang"><img src="{INSTA_ICON}" class="social-icon"></a>
+            <a href="https://facebook.com/iamanujnarang"><img src="{FB_ICON}" class="social-icon"></a>
+            <a href="https://x.com/iamanujnarang"><img src="{X_ICON}" class="social-icon"></a>
+            <a href="https://linkedin.com/in/iamanujnarang"><img src="{LINKEDIN_ICON}" class="social-icon"></a>
         </div>
         <div class="beeclue-box">
             <div class="powered-text">In Strategic Collaboration with</div>
             <a href="https://beeclue.com" target="_blank">
-                <img src="{BEECLUE_LOGO_PNG}" class="beeclue-img" style="width: 180px;">
+                <img src="{BEECLUE_LOGO_PNG}" width="180" style="display: block; margin: 0 auto;">
             </a>
         </div>
-        <div style="color: #94a3b8; font-size: 0.85rem; margin-top: 25px;">© 2026 | Supply Code 2024 Compliance | Punjab State Power Corp Ltd.</div>
+        <div style="color: #94a3b8; font-size: 0.85rem; margin-top: 25px;">© 2026 | Supply Code 2024 Compliance | Punjab State Power Corporation Ltd.</div>
     </div>
-    """
-    st.markdown(footer_html, unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
