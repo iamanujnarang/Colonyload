@@ -37,7 +37,6 @@ st.markdown("""
 # 2. HELPER FUNCTIONS
 # ==========================================
 def get_dt_combination(target_kva):
-    """Calculates optimal combination of standard PSPCL DTs"""
     available_dts = [1000, 800, 500, 315, 300, 200, 100, 63, 25]
     remaining = target_kva
     combination = {}
@@ -57,38 +56,27 @@ def get_dt_combination(target_kva):
 # 3. MAIN APPLICATION
 # ==========================================
 def main():
-    # Centered Header
     st.markdown(f'<div style="text-align: center;"><img src="{PSPCL_LOGO_URL}" width="150"></div>', unsafe_allow_html=True)
     st.markdown('<h1 style="text-align: center; color: #1e293b;">⚡ Colony Load Assessment Master</h1>', unsafe_allow_html=True)
     st.markdown('<p style="text-align: center; color: #64748b;">Official Framework as per Supply Code 2024 (Reg. 12)</p>', unsafe_allow_html=True)
     st.divider()
 
-    # Session State for Dynamic Rows for STP/Utilities
-    if 'service_rows' not in st.session_state:
-        st.session_state.service_rows = 1
+    # Session States for Dynamic Rows
+    if 'service_rows' not in st.session_state: st.session_state.service_rows = 1
+    if 'comm_rows' not in st.session_state: st.session_state.comm_rows = 1
 
-    # Project Data
     c1, c2 = st.columns(2)
-    with c1:
-        project_name = st.text_input("Project Name / Site Address", placeholder="e.g. Venus Green Enclave")
-    with c2:
-        developer_name = st.text_input("Developer Name", placeholder="e.g. Er. Anuj Narang Builders")
+    with c1: project_name = st.text_input("Project Name / Site Address", placeholder="e.g. Venus Green Enclave")
+    with c2: developer_name = st.text_input("Developer Name", placeholder="e.g. Er. Anuj Narang")
 
-    # Final data list
     all_calculated_items = []
 
-    # UI Tabs
-    tab_res, tab_comm, tab_services = st.tabs(["🏡 Residential (40%)", "🏢 Commercial (50%)", "🛠️ STP & Public Services"])
+    tab_res, tab_comm, tab_services = st.tabs(["🏡 Residential (40%)", "🏢 Commercial (50%)", "🛠️ Public Utilities"])
 
     # --- RESIDENTIAL TAB ---
     with tab_res:
-        with st.expander("📝 Enter Residential Plot Details", expanded=True):
-            res_plots = [
-                ("Up to 100 Sq. Yards", 5), ("Above 100 to 200 Sq. Yards", 8),
-                ("Above 200 to 250 Sq. Yards", 10), ("Above 250 to 350 Sq. Yards", 12),
-                ("Above 350 to 500 Sq. Yards", 20), ("Above 500 to 1000 Sq. Yards", 30),
-                ("Above 1000 to 2000 Sq. Yards", 40), ("Above 2000 Sq. Yards", 50)
-            ]
+        with st.expander("📝 Residential Plot Details", expanded=True):
+            res_plots = [("Up to 100 Sq. Yards", 5), ("Above 100 to 200 Sq. Yards", 8), ("Above 200 to 250 Sq. Yards", 10), ("Above 250 to 350 Sq. Yards", 12), ("Above 350 to 500 Sq. Yards", 20), ("Above 500 to 1000 Sq. Yards", 30), ("Above 1000 to 2000 Sq. Yards", 40), ("Above 2000 Sq. Yards", 50)]
             r_cols = st.columns(2)
             for i, (label, norm) in enumerate(res_plots):
                 target_col = r_cols[0] if i < 4 else r_cols[1]
@@ -96,12 +84,8 @@ def main():
                 if qty > 0:
                     all_calculated_items.append({"Description": label, "Norms": norm, "Qty": qty, "Factor": 0.40, "Type": "Residential"})
 
-        with st.expander("🏢 Enter Residential Flat Details", expanded=False):
-            res_flats = [
-                ("Upto 350 sq. ft", 4), ("350 to 600 sq. ft", 5), ("600 to 900 sq. ft", 7),
-                ("900 to 1200 sq. ft", 8), ("1200 to 1600 sq. ft", 10), ("1600 to 1900 sq. ft", 12),
-                ("Above 1900 sq. ft", 15)
-            ]
+        with st.expander("🏢 Residential Flat Details", expanded=False):
+            res_flats = [("Upto 350 sq. ft", 4), ("350 to 600 sq. ft", 5), ("600 to 900 sq. ft", 7), ("900 to 1200 sq. ft", 8), ("1200 to 1600 sq. ft", 10), ("1600 to 1900 sq. ft", 12), ("Above 1900 sq. ft", 15)]
             f_cols = st.columns(2)
             for i, (label, norm) in enumerate(res_flats):
                 target_col = f_cols[0] if i < 4 else f_cols[1]
@@ -111,65 +95,74 @@ def main():
 
     # --- COMMERCIAL TAB ---
     with tab_comm:
-        with st.expander("🛍️ Enter Commercial Details", expanded=False):
-            shop_qty = st.number_input("Number of Shops (Upto 50 SY) [10 kW per Floor]", min_value=0, step=1)
-            if shop_qty > 0:
-                all_calculated_items.append({"Description": "Shops (Upto 50 SY)", "Norms": 10.0, "Qty": shop_qty, "Factor": 0.50, "Type": "Commercial"})
+        st.subheader("Commercial Plots Assessment")
+        
+        # Part A: Small Shops
+        shop_qty = st.number_input("Shops/Showrooms (Upto 50 SY) [10 kW per Floor]", min_value=0, step=1)
+        if shop_qty > 0:
+            all_calculated_items.append({"Description": "Shops (Upto 50 SY)", "Norms": 10.0, "Qty": shop_qty, "Factor": 0.50, "Type": "Commercial"})
+        
+        st.divider()
+        st.write("**Commercial Plots (Above 50 SY) - 175 Watt/SY Norm**")
+        
+        for j in range(st.session_state.comm_rows):
+            cc1, cc2, cc3, cc4 = st.columns([3, 2, 2, 2])
+            with cc1: c_desc = st.text_input(f"Plot Label {j+1}", key=f"cn_{j}", value=f"Comm Plot {j+1}")
+            with cc2: c_area = st.number_input(f"Area in SY {j+1}", min_value=0.0, key=f"ca_{j}")
+            with cc3: c_qty = st.number_input(f"Qty {j+1}", min_value=0, step=1, key=f"cq_{j}")
+            with cc4: c_far = st.number_input(f"FAR {j+1}", min_value=1.0, value=1.0, key=f"cf_{j}", help="Floor Area Ratio")
             
-            comm_area = st.number_input("Commercial Plot Area (Above 50 SY) [175 Watt/SY]", min_value=0.0)
-            if comm_area > 0:
-                load_comm = (comm_area * 175) / 1000
-                all_calculated_items.append({"Description": "Commercial Area Plot", "Norms": load_comm, "Qty": 1, "Factor": 0.50, "Type": "Commercial"})
+            if c_area > 0 and c_qty > 0:
+                # Norm is 175 Watt per SY = 0.175 kW per SY
+                norm_val = c_area * 0.175 * c_far
+                all_calculated_items.append({"Description": f"{c_desc} ({c_area} SY)", "Norms": norm_val, "Qty": c_qty, "Factor": 0.50, "Type": "Commercial"})
+        
+        if st.button("➕ Add Commercial Category"):
+            st.session_state.comm_rows += 1
+            st.rerun()
 
-    # --- DYNAMIC STP & PUBLIC SERVICES TAB ---
+    # --- PUBLIC SERVICES TAB ---
     with tab_services:
-        st.info("💡 Add public utility loads like STP, Street Lights, or Water Works with manual factors.")
-        for i in range(st.session_state.service_rows):
+        st.subheader("Add Public Utility Loads")
+        for k in range(st.session_state.service_rows):
             sc1, sc2, sc3, sc4 = st.columns([3, 2, 1, 2])
-            with sc1: 
-                desc = st.text_input(f"Public Service Name {i+1}", key=f"sn_{i}", placeholder="e.g. STP")
-            with sc2: 
-                s_load = st.number_input(f"Load (kW) for {i+1}", min_value=0.0, key=f"sl_{i}")
-            with sc3: 
-                s_qty = st.number_input(f"Qty {i+1}", min_value=0, step=1, key=f"sq_{i}", value=1)
-            with sc4: 
-                s_fac = st.number_input(f"Demand Factor {i+1}", min_value=0.0, max_value=1.0, value=1.0, key=f"sf_{i}")
-            
+            with sc1: desc = st.text_input(f"Service Name {k+1}", key=f"sn_{k}", placeholder="e.g. STP")
+            with sc2: s_load = st.number_input(f"Load (kW) {k+1}", min_value=0.0, key=f"sl_{k}")
+            with sc3: s_qty = st.number_input(f"Qty {k+1}", min_value=0, step=1, key=f"sq_{k}", value=1)
+            with sc4: s_fac = st.number_input(f"Factor {k+1}", min_value=0.0, max_value=1.0, value=1.0, key=f"sf_{k}")
             if desc and s_load > 0:
                 all_calculated_items.append({"Description": desc, "Norms": s_load, "Qty": s_qty, "Factor": s_fac, "Type": "Utility"})
-
-        if st.button("➕ Add Another Public Service Row"):
+        
+        if st.button("➕ Add Service Row"):
             st.session_state.service_rows += 1
             st.rerun()
 
     # ==========================================
-    # 4. CALCULATION ENGINE
+    # 4. CALCULATION & DISPLAY
     # ==========================================
     if all_calculated_items:
         df = pd.DataFrame(all_calculated_items)
-        df['Total_Load_kW'] = df['Norms'] * df['Qty']
-        df['Net_Load_kW'] = df['Total_Load_kW'] * df['Factor']
+        df['Total_kW'] = df['Norms'] * df['Qty']
+        df['Net_Load'] = df['Total_kW'] * df['Factor']
 
-        grand_total_net_kw = df['Net_Load_kW'].sum()
+        grand_total_net_kw = df['Net_Load'].sum()
         total_kva = grand_total_net_kw / 0.95
 
         st.divider()
-        st.header("📋 Assessment Preview")
+        st.header("📋 Assessment Summary Table")
         
-        # Table UI
         display_df = df.copy()
-        display_df['Norms'] = display_df['Norms'].apply(lambda x: f"{x} kW")
-        st.table(display_df[['Description', 'Norms', 'Qty', 'Total_Load_kW', 'Factor', 'Net_Load_kW']].rename(
-            columns={'Total_Load_kW': 'Total Load (kW)', 'Net_Load_kW': 'Net Load (After Factor)'}
+        # Visual clean up for table
+        display_df['Norms'] = display_df['Norms'].apply(lambda x: f"{x:.3f} kW")
+        st.table(display_df[['Description', 'Norms', 'Qty', 'Total_kW', 'Factor', 'Net_Load']].rename(
+            columns={'Total_kW': 'Total Load (kW)', 'Net_Load': 'Net Load (After Factor)'}
         ))
 
-        # Metrics
         m1, m2, m3 = st.columns(3)
         with m1: st.markdown(f'<div class="summary-card"><h5>Net Colony Load</h5><h2>{grand_total_net_kw:.2f} kW</h2></div>', unsafe_allow_html=True)
         with m2: st.markdown(f'<div class="summary-card"><h5>Total kVA (0.95 PF)</h5><h2 style="color: #0b79d0;">{total_kva:.2f} kVA</h2></div>', unsafe_allow_html=True)
         with m3: st.markdown(f'<div class="summary-card"><h5>Total DT Capacity</h5><h2>{math.ceil(total_kva)} kVA</h2></div>', unsafe_allow_html=True)
 
-        # DT Combination
         dt_combo = get_dt_combination(total_kva)
         dt_str = ", ".join([f"({v}) Nos. {k}" for k, v in dt_combo.items()])
         st.success(f"**Recommended DT Configuration (100% Loading):** {dt_str}")
@@ -181,32 +174,29 @@ def main():
         st.info(f"**NOC Approving Authority:** {auth}")
 
         # ==========================================
-        # 5. EXCEL EXPORT (FIXED FOR CORRECT FORMAT)
+        # 5. EXCEL EXPORT
         # ==========================================
         output = BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             workbook = writer.book
             worksheet = workbook.add_worksheet('Load Assessment')
-            
             title_fmt = workbook.add_format({'bold': True, 'font_size': 14, 'align': 'center'})
             header_fmt = workbook.add_format({'bold': True, 'bg_color': '#0b79d0', 'font_color': 'white', 'border': 1, 'align': 'center'})
             cell_fmt = workbook.add_format({'border': 1, 'align': 'center'})
             bold_cell = workbook.add_format({'bold': True, 'border': 1})
 
             worksheet.merge_range('A1:F1', f"LOAD CALCULATIONS FOR PROJECT: {project_name.upper()}", title_fmt)
-            
             headers = ["Sr. No", "Description", "Norms (kW)", "Quantity", "Total Load (kW)", "Net Load"]
             for col, text in enumerate(headers): worksheet.write(2, col, text, header_fmt)
 
-            # Fix: Use dict access to avoid Attribute Error
             for i, row in enumerate(df.to_dict('records')):
                 idx = i + 3
                 worksheet.write(idx, 0, i+1, cell_fmt)
                 worksheet.write(idx, 1, row['Description'], cell_fmt)
-                worksheet.write(idx, 2, f"{row['Norms']} kW", cell_fmt)
+                worksheet.write(idx, 2, f"{row['Norms']:.3f} kW", cell_fmt)
                 worksheet.write(idx, 3, row['Qty'], cell_fmt)
-                worksheet.write(idx, 4, row['Total_Load_kW'], cell_fmt)
-                worksheet.write(idx, 5, row['Net_Load_kW'], cell_fmt)
+                worksheet.write(idx, 4, row['Total_kW'], cell_fmt)
+                worksheet.write(idx, 5, row['Net_Load'], cell_fmt)
 
             last_row = len(df) + 4
             worksheet.write(last_row, 1, "GRAND TOTAL NET LOAD (kW)", bold_cell)
@@ -220,7 +210,7 @@ def main():
         st.download_button(label="📥 Export Assessment to Excel", data=output.getvalue(), file_name=f"{project_name}_Load_Sheet.xlsx")
 
     # ==========================================
-    # 6. FOOTER (BRANDING)
+    # 6. FOOTER
     # ==========================================
     st.markdown(f"""
     <div class="footer-container">
