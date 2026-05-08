@@ -10,7 +10,7 @@ PSPCL_LOGO_URL = "https://pspcl.in/assets/images/logo.png"
 BEECLUE_LOGO_PNG = "https://raw.githubusercontent.com/iamanujnarang/LDHF/e5748e037b76a52a47d610a88c3a3c70f72f1c9a/BEECLUE.png"
 INSTA_ICON = "https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png"
 FB_ICON = "https://upload.wikimedia.org/wikipedia/commons/1/1b/Facebook_icon.svg"
-X_ICON = "https://upload.wikimedia.org/wikipedia/commons/b/b7/X_logo.jpg"
+X_ICON = "https://upload.wikimedia.org/wikipedia/commons/5/53/X_logo_2023_original.svg"
 LINKEDIN_ICON = "https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png"
 
 st.set_page_config(page_title="Colony Load Calculator", layout="wide", page_icon="⚡")
@@ -19,7 +19,6 @@ st.set_page_config(page_title="Colony Load Calculator", layout="wide", page_icon
 st.markdown("""
     <style>
     .main { background-color: #f8fafc; }
-    .stTabs [data-baseweb="tab-list"] { gap: 24px; }
     .footer-container { text-align: center; margin-top: 80px; padding: 40px 20px; border-top: 1px solid #ddd; }
     .made-with-love { font-size: 1.2rem; color: #334155; margin-bottom: 20px; }
     .heart-symbol { color: #e63946; }
@@ -27,7 +26,7 @@ st.markdown("""
     .social-icon:hover { transform: scale(1.2); }
     .powered-text { color: #94a3b8; font-size: 0.7rem; letter-spacing: 2px; margin-bottom: 10px; text-transform: uppercase; }
     .beeclue-img { width: 180px; height: auto; }
-    .summary-card { background: white; padding: 20px; border-radius: 15px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+    .summary-card { background: white; padding: 25px; border-radius: 15px; border: 2px solid #0b79d0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); text-align: center; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -54,10 +53,9 @@ def get_dt_combination(target_kva):
 # 3. MAIN APPLICATION
 # ==========================================
 def main():
-    # Header
     st.markdown(f'<div style="text-align: center;"><img src="{PSPCL_LOGO_URL}" width="150"></div>', unsafe_allow_html=True)
     st.markdown('<h1 style="text-align: center; color: #1e293b;">⚡ Colony Load Calculator</h1>', unsafe_allow_html=True)
-    st.markdown('<p style="text-align: center; color: #64748b;">Official Framework as per Supply Code 2024 (Reg. 12)</p>', unsafe_allow_html=True)
+    st.markdown('<p style="text-align: center; color: #64748b;">Supply Code 2024 Framework (Reg. 12)</p>', unsafe_allow_html=True)
     st.divider()
 
     if 'service_rows' not in st.session_state: st.session_state.service_rows = 1
@@ -70,6 +68,7 @@ def main():
     all_calculated_items = []
     tab_res, tab_comm, tab_services = st.tabs(["🏡 Residential (40%)", "🏢 Commercial (50%)", "🛠️ Public Utilities"])
 
+    # --- RESIDENTIAL TAB ---
     with tab_res:
         with st.expander("📝 Residential Plots", expanded=True):
             res_plots = [
@@ -92,38 +91,52 @@ def main():
                 if qty > 0:
                     all_calculated_items.append({"Description": f"Flat {label} ({norm} kW)", "Norms": norm, "Qty": qty, "Factor": 0.40, "Type": "Residential"})
 
+    # --- COMMERCIAL TAB ---
     with tab_comm:
-        st.write("**Commercial (Floor Area Ratio / FAR applied)**")
+        st.subheader("Commercial Space Assessment")
+        uniform_far_check = st.checkbox("Apply Uniform FAR (Floor Area Ratio) for all commercial load?", value=True)
+        uniform_far_val = 1.0
+        if uniform_far_check:
+            uniform_far_val = st.number_input("Enter Uniform FAR value", min_value=1.0, value=1.0, step=0.1)
+
+        st.divider()
+        st.write("**Shops/Showrooms (Upto 50 Square Yards)**")
         sc1, sc2 = st.columns(2)
-        shop_qty = sc1.number_input("Number of Shops (Upto 50 Square Yards)", min_value=0, step=1)
-        shop_far = sc2.number_input("Floor Area Ratio (FAR) for Shops", min_value=1.0, value=1.0, step=0.1)
+        shop_qty = sc1.number_input("Number of Shops", min_value=0, step=1)
+        # Show individual FAR only if uniform is unticked
+        shop_far = uniform_far_val if uniform_far_check else sc2.number_input("Individual FAR for Shops", min_value=1.0, value=1.0, step=0.1, key="shop_far_ind")
+        
         if shop_qty > 0:
-            all_calculated_items.append({"Description": "Shops (Upto 50 Square Yards)", "Norms": 10.0 * shop_far, "Qty": shop_qty, "Factor": 0.50, "Type": "Commercial"})
+            all_calculated_items.append({"Description": "Shops (Upto 50 SY)", "Norms": 10.0 * shop_far, "Qty": shop_qty, "Factor": 0.50, "Type": "Commercial"})
         
         st.divider()
+        st.write("**Commercial Plots (Above 50 Square Yards)**")
         for j in range(st.session_state.comm_rows):
             cc1, cc2, cc3, cc4 = st.columns([3, 2, 1, 1])
             with cc1: c_desc = st.text_input(f"Comm Plot Label {j+1}", key=f"cn_{j}", value=f"Comm Plot {j+1}")
-            with cc2: c_area = st.number_input(f"Area(Square Yards) {j+1}", min_value=0.0, key=f"ca_{j}")
+            with cc2: c_area = st.number_input(f"Area (Square Yards) {j+1}", min_value=0.0, key=f"ca_{j}")
             with cc3: c_qty = st.number_input(f"Qty {j+1}", min_value=0, step=1, key=f"cq_{j}")
-            with cc4: c_far = st.number_input(f"FAR {j+1}", min_value=1.0, value=1.0, key=f"cf_{j}")
+            # Individual FAR logic
+            c_far_final = uniform_far_val if uniform_far_check else cc4.number_input(f"FAR {j+1}", min_value=1.0, value=1.0, key=f"cf_{j}")
+            
             if c_area > 0 and c_qty > 0:
-                all_calculated_items.append({"Description": f"{c_desc} ({c_area} Square Yards)", "Norms": c_area * 0.175 * c_far, "Qty": c_qty, "Factor": 0.50, "Type": "Commercial"})
+                all_calculated_items.append({"Description": f"{c_desc} ({c_area} SY)", "Norms": c_area * 0.175 * c_far_final, "Qty": c_qty, "Factor": 0.50, "Type": "Commercial"})
         if st.button("➕ Add Commercial Category"): st.session_state.comm_rows += 1; st.rerun()
 
+    # --- PUBLIC SERVICES TAB ---
     with tab_services:
         for k in range(st.session_state.service_rows):
             sc1, sc2, sc3, sc4 = st.columns([3, 2, 1, 2])
             with sc1: desc = st.text_input(f"Service {k+1}", key=f"sn_{k}", placeholder="e.g. STP")
-            with sc2: s_load = st.number_input(f"Load (kW) {k+1}", min_value=0.0, key=f"sl_{k}")
+            with sc2: s_load = st.number_input(f"Load(kW) {k+1}", min_value=0.0, key=f"sl_{k}")
             with sc3: s_qty = st.number_input(f"Qty {k+1}", min_value=0, value=1, key=f"sq_{k}")
             with sc4: s_fac = st.number_input(f"Factor {k+1}", min_value=0.0, value=1.0, key=f"sf_{k}")
             if desc and s_load > 0:
                 all_calculated_items.append({"Description": desc, "Norms": s_load, "Qty": s_qty, "Factor": s_fac, "Type": "Utility"})
-        if st.button("➕ Add Another Row"): st.session_state.service_rows += 1; st.rerun()
+        if st.button("➕ Add Service Row"): st.session_state.service_rows += 1; st.rerun()
 
     # ==========================================
-    # 4. CALCULATION ENGINE
+    # 4. FINAL CALCULATION ENGINE (PF, KVA, DT)
     # ==========================================
     if all_calculated_items:
         df = pd.DataFrame(all_calculated_items)
@@ -132,17 +145,28 @@ def main():
         
         grand_total_net_kw = df['Net_Load_kW'].sum()
         total_kva = grand_total_net_kw / 0.95
-        dt_req = math.ceil(total_kva)
+        dt_req_kva = math.ceil(total_kva)
 
         st.divider()
-        st.header("📋 Assessment Summary")
+        st.header("📋 Load Assessment Summary")
         display_df = df.copy()
         display_df['Norms'] = display_df['Norms'].apply(lambda x: f"{x:.3f} kW")
-        st.table(display_df[['Description', 'Norms', 'Qty', 'Total_Load_kW', 'Factor', 'Net_Load_kW']])
+        st.table(display_df[['Description', 'Norms', 'Qty', 'Total_Load_kW', 'Factor', 'Net_Load_kW']].rename(columns={'Total_Load_kW': 'Total Load (kW)', 'Net_Load_kW': 'Net Load (kW)'}))
+
+        # SUMMARY CARDS
+        res_col1, res_col2, res_col3, res_col4 = st.columns(4)
+        with res_col1:
+            st.markdown(f'<div class="summary-card"><p>Net Load</p><h3>{grand_total_net_kw:.2f} kW</h3></div>', unsafe_allow_html=True)
+        with res_col2:
+            st.markdown(f'<div class="summary-card"><p>PF Applied</p><h3>0.95</h3></div>', unsafe_allow_html=True)
+        with res_col3:
+            st.markdown(f'<div class="summary-card"><p>Total kVA</p><h3 style="color: #0b79d0;">{total_kva:.2f} kVA</h3></div>', unsafe_allow_html=True)
+        with res_col4:
+            st.markdown(f'<div class="summary-card"><p>DT Capacity Needed</p><h3>{dt_req_kva} kVA</h3></div>', unsafe_allow_html=True)
 
         dt_combo = get_dt_combination(total_kva)
         dt_str = ", ".join([f"{v} Nos. {k}" for k, v in dt_combo.items()])
-        st.success(f"**Recommended Configuration:** {dt_str}")
+        st.success(f"**Recommended Transformer Configuration (100% Loading):** {dt_str}")
 
         # Excel Export
         output = BytesIO()
@@ -161,11 +185,14 @@ def main():
                 worksheet.write(i+3, 3, row['Qty'], center)
                 worksheet.write(i+3, 4, row['Total_Load_kW'], center)
                 worksheet.write(i+3, 5, row['Net_Load_kW'], center)
-            worksheet.write(len(df)+4, 1, "GRAND TOTAL NET LOAD (kW)", bold); worksheet.write(len(df)+4, 5, grand_total_net_kw, bold)
-            worksheet.write(len(df)+5, 1, "TOTAL LOAD IN kVA (0.95 PF)", bold); worksheet.write(len(df)+5, 5, total_kva, bold)
+            
+            lrow = len(df)+4
+            worksheet.write(lrow, 1, "GRAND TOTAL NET LOAD (kW)", bold); worksheet.write(lrow, 5, grand_total_net_kw, bold)
+            worksheet.write(lrow+1, 1, "TOTAL LOAD IN kVA (0.95 PF)", bold); worksheet.write(lrow+1, 5, total_kva, bold)
+            worksheet.write(lrow+2, 1, "DT CAPACITY REQUIRED (kVA)", bold); worksheet.write(lrow+2, 5, dt_req_kva, bold)
             worksheet.set_column(1, 1, 40)
 
-        st.download_button("📥 Export to Excel", output.getvalue(), f"{project_name}_Load.xlsx")
+        st.download_button("📥 Download Excel Assessment", output.getvalue(), f"{project_name}_Load.xlsx")
 
     # ==========================================
     # 5. FOOTER
@@ -179,14 +206,12 @@ def main():
     <a href="https://x.com/iamanujnarang" target="_blank"><img src="{X_ICON}" class="social-icon"></a>
     <a href="https://linkedin.com/in/iamanujnarang" target="_blank"><img src="{LINKEDIN_ICON}" class="social-icon"></a>
     </div>
-
     <div style="margin-top: 25px;">
         <div class="powered-text">In Strategic Collaboration with</div>
         <a href="https://beeclue.com" target="_blank">
             <img src="{BEECLUE_LOGO_PNG}" class="beeclue-img">
         </a>
     </div>
-
     <div style="color: #94a3b8; font-size: 0.85rem; margin-top: 25px;">© 2026 | PSPCL Guidelines | CC 45/2024</div>
     </div>
     """
