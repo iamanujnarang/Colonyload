@@ -206,7 +206,7 @@ def main():
             <img src="{BEECLUE_LOGO_PNG}" class="beeclue-img">
         </a>
     </div>
-    <div style="color: #94a3b8; font-size: 0.85rem; margin-top: 25px;">© 2026 | PSPCL Guidelines | CC 35/2025</div>
+    <div style="color: #94a3b8; font-size: 0.85rem; margin-top: 25px;">© 2026 | PSPCL Guidelines | CC 45/2024 </div>
     </div>
     """, unsafe_allow_html=True)
 
