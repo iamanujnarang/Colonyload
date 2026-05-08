@@ -10,7 +10,7 @@ PSPCL_LOGO_URL = "https://pspcl.in/assets/images/logo.png"
 BEECLUE_LOGO_PNG = "https://raw.githubusercontent.com/iamanujnarang/LDHF/e5748e037b76a52a47d610a88c3a3c70f72f1c9a/BEECLUE.png"
 INSTA_ICON = "https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png"
 FB_ICON = "https://upload.wikimedia.org/wikipedia/commons/1/1b/Facebook_icon.svg"
-X_ICON = "https://upload.wikimedia.org/wikipedia/commons/5/53/X_logo_2023_original.svg"
+X_ICON = "https://upload.wikimedia.org/wikipedia/commons/b/b7/X_logo.jpg"
 LINKEDIN_ICON = "https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png"
 
 st.set_page_config(page_title="Colony Load Calculator", layout="wide", page_icon="⚡")
@@ -54,9 +54,10 @@ def get_dt_combination(target_kva):
 # 3. MAIN APPLICATION
 # ==========================================
 def main():
+    # Header
     st.markdown(f'<div style="text-align: center;"><img src="{PSPCL_LOGO_URL}" width="150"></div>', unsafe_allow_html=True)
     st.markdown('<h1 style="text-align: center; color: #1e293b;">⚡ Colony Load Calculator</h1>', unsafe_allow_html=True)
-    st.markdown('<p style="text-align: center; color: #64748b;">Supply Code 2024 Framework (Reg. 12)</p>', unsafe_allow_html=True)
+    st.markdown('<p style="text-align: center; color: #64748b;">Official Framework as per Supply Code 2024 (Reg. 12)</p>', unsafe_allow_html=True)
     st.divider()
 
     if 'service_rows' not in st.session_state: st.session_state.service_rows = 1
@@ -100,11 +101,10 @@ def main():
             all_calculated_items.append({"Description": "Shops (Upto 50 Square Yards)", "Norms": 10.0 * shop_far, "Qty": shop_qty, "Factor": 0.50, "Type": "Commercial"})
         
         st.divider()
-        st.write("**Commercial Plots (Above 50 Square Yards)**")
         for j in range(st.session_state.comm_rows):
             cc1, cc2, cc3, cc4 = st.columns([3, 2, 1, 1])
             with cc1: c_desc = st.text_input(f"Comm Plot Label {j+1}", key=f"cn_{j}", value=f"Comm Plot {j+1}")
-            with cc2: c_area = st.number_input(f"Area (Square Yards) {j+1}", min_value=0.0, key=f"ca_{j}")
+            with cc2: c_area = st.number_input(f"Area(Square Yards) {j+1}", min_value=0.0, key=f"ca_{j}")
             with cc3: c_qty = st.number_input(f"Qty {j+1}", min_value=0, step=1, key=f"cq_{j}")
             with cc4: c_far = st.number_input(f"FAR {j+1}", min_value=1.0, value=1.0, key=f"cf_{j}")
             if c_area > 0 and c_qty > 0:
@@ -114,16 +114,16 @@ def main():
     with tab_services:
         for k in range(st.session_state.service_rows):
             sc1, sc2, sc3, sc4 = st.columns([3, 2, 1, 2])
-            with sc1: desc = st.text_input(f"Public Service {k+1}", key=f"sn_{k}", placeholder="e.g. STP")
-            with sc2: s_load = st.number_input(f"Load(kW) {k+1}", min_value=0.0, key=f"sl_{k}")
+            with sc1: desc = st.text_input(f"Service {k+1}", key=f"sn_{k}", placeholder="e.g. STP")
+            with sc2: s_load = st.number_input(f"Load (kW) {k+1}", min_value=0.0, key=f"sl_{k}")
             with sc3: s_qty = st.number_input(f"Qty {k+1}", min_value=0, value=1, key=f"sq_{k}")
             with sc4: s_fac = st.number_input(f"Factor {k+1}", min_value=0.0, value=1.0, key=f"sf_{k}")
             if desc and s_load > 0:
                 all_calculated_items.append({"Description": desc, "Norms": s_load, "Qty": s_qty, "Factor": s_fac, "Type": "Utility"})
-        if st.button("➕ Add Service"): st.session_state.service_rows += 1; st.rerun()
+        if st.button("➕ Add Another Row"): st.session_state.service_rows += 1; st.rerun()
 
     # ==========================================
-    # 4. CALCULATION & OUTPUT
+    # 4. CALCULATION ENGINE
     # ==========================================
     if all_calculated_items:
         df = pd.DataFrame(all_calculated_items)
@@ -135,7 +135,7 @@ def main():
         dt_req = math.ceil(total_kva)
 
         st.divider()
-        st.header("📋 Load Assessment Summary")
+        st.header("📋 Assessment Summary")
         display_df = df.copy()
         display_df['Norms'] = display_df['Norms'].apply(lambda x: f"{x:.3f} kW")
         st.table(display_df[['Description', 'Norms', 'Qty', 'Total_Load_kW', 'Factor', 'Net_Load_kW']])
@@ -144,7 +144,7 @@ def main():
         dt_str = ", ".join([f"{v} Nos. {k}" for k, v in dt_combo.items()])
         st.success(f"**Recommended Configuration:** {dt_str}")
 
-        # Excel
+        # Excel Export
         output = BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             workbook = writer.book
@@ -162,4 +162,35 @@ def main():
                 worksheet.write(i+3, 4, row['Total_Load_kW'], center)
                 worksheet.write(i+3, 5, row['Net_Load_kW'], center)
             worksheet.write(len(df)+4, 1, "GRAND TOTAL NET LOAD (kW)", bold); worksheet.write(len(df)+4, 5, grand_total_net_kw, bold)
-            worksheet.write(len(df)+5, 1, "TOTAL LOAD IN kVA (0.95 PF)", bold); worksheet.write
+            worksheet.write(len(df)+5, 1, "TOTAL LOAD IN kVA (0.95 PF)", bold); worksheet.write(len(df)+5, 5, total_kva, bold)
+            worksheet.set_column(1, 1, 40)
+
+        st.download_button("📥 Export to Excel", output.getvalue(), f"{project_name}_Load.xlsx")
+
+    # ==========================================
+    # 5. FOOTER
+    # ==========================================
+    footer_html = f"""
+    <div class="footer-container">
+    <div class="made-with-love">Made with <span class="heart-symbol">❤️</span> by <b>Er. Anuj Narang, JE PSPCL</b></div>
+    <div style="margin-bottom: 25px;">
+    <a href="https://instagram.com/iamanujnarang" target="_blank"><img src="{INSTA_ICON}" class="social-icon"></a>
+    <a href="https://facebook.com/iamanujnarang" target="_blank"><img src="{FB_ICON}" class="social-icon"></a>
+    <a href="https://x.com/iamanujnarang" target="_blank"><img src="{X_ICON}" class="social-icon"></a>
+    <a href="https://linkedin.com/in/iamanujnarang" target="_blank"><img src="{LINKEDIN_ICON}" class="social-icon"></a>
+    </div>
+
+    <div style="margin-top: 25px;">
+        <div class="powered-text">In Strategic Collaboration with</div>
+        <a href="https://beeclue.com" target="_blank">
+            <img src="{BEECLUE_LOGO_PNG}" class="beeclue-img">
+        </a>
+    </div>
+
+    <div style="color: #94a3b8; font-size: 0.85rem; margin-top: 25px;">© 2026 | PSPCL Guidelines | CC 45/2024</div>
+    </div>
+    """
+    st.markdown(footer_html, unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    main()
