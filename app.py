@@ -81,7 +81,7 @@ def main():
             for i, (label, norm) in enumerate(res_plots):
                 qty = r_cols[i%2].number_input(f"{label} ({norm} kW)", min_value=0, step=1, key=f"rp_{i}")
                 if qty > 0:
-                    all_calculated_items.append({"Description": f"{label} ({norm} kW)", "Norms": norm, "Qty": qty, "Load Load Factor": 0.40, "Type": "Residential"})
+                    all_calculated_items.append({"Description": f"{label} ({norm} kW)", "Norms": norm, "Qty": qty, "Load Factor": 0.40, "Type": "Residential"})
 
         with st.expander("🏢 Residential Flats", expanded=False):
             res_flats = [("Upto 350 sq.ft", 4), ("350-600 sq.ft", 5), ("600-900 sq.ft", 7), ("900-1200 sq.ft", 8), ("1200-1600 sq.ft", 10), ("1600-1900 sq.ft", 12), ("Above 1900 sq.ft", 15)]
@@ -89,7 +89,7 @@ def main():
             for i, (label, norm) in enumerate(res_flats):
                 qty = f_cols[i%2].number_input(f"Flat: {label} ({norm} kW)", min_value=0, step=1, key=f"rf_{i}")
                 if qty > 0:
-                    all_calculated_items.append({"Description": f"Flat {label} ({norm} kW)", "Norms": norm, "Qty": qty, "Load Load Factor": 0.40, "Type": "Residential"})
+                    all_calculated_items.append({"Description": f"Flat {label} ({norm} kW)", "Norms": norm, "Qty": qty, "Load Factor": 0.40, "Type": "Residential"})
 
     # --- COMMERCIAL TAB ---
     with tab_comm:
@@ -103,11 +103,10 @@ def main():
         st.write("**Shops/Showrooms (Upto 50 Square Yards)**")
         sc1, sc2 = st.columns(2)
         shop_qty = sc1.number_input("Number of Shops", min_value=0, step=1)
-        # Show individual FAR only if uniform is unticked
         shop_far = uniform_far_val if uniform_far_check else sc2.number_input("Individual FAR for Shops", min_value=1.0, value=1.0, step=0.1, key="shop_far_ind")
         
         if shop_qty > 0:
-            all_calculated_items.append({"Description": "Shops (Upto 50 SY)", "Norms": 10.0 * shop_far, "Qty": shop_qty, "Load Load Factor": 0.50, "Type": "Commercial"})
+            all_calculated_items.append({"Description": "Shops (Upto 50 SY)", "Norms": 10.0 * shop_far, "Qty": shop_qty, "Load Factor": 0.50, "Type": "Commercial"})
         
         st.divider()
         st.write("**Commercial Plots (Above 50 Square Yards)**")
@@ -116,11 +115,10 @@ def main():
             with cc1: c_desc = st.text_input(f"Comm Plot Label {j+1}", key=f"cn_{j}", value=f"Comm Plot {j+1}")
             with cc2: c_area = st.number_input(f"Area (Square Yards) {j+1}", min_value=0.0, key=f"ca_{j}")
             with cc3: c_qty = st.number_input(f"Qty {j+1}", min_value=0, step=1, key=f"cq_{j}")
-            # Individual FAR logic
             c_far_final = uniform_far_val if uniform_far_check else cc4.number_input(f"FAR {j+1}", min_value=1.0, value=1.0, key=f"cf_{j}")
             
             if c_area > 0 and c_qty > 0:
-                all_calculated_items.append({"Description": f"{c_desc} ({c_area} SY)", "Norms": c_area * 0.175 * c_far_final, "Qty": c_qty, "Load Load Factor": 0.50, "Type": "Commercial"})
+                all_calculated_items.append({"Description": f"{c_desc} ({c_area} SY)", "Norms": c_area * 0.175 * c_far_final, "Qty": c_qty, "Load Factor": 0.50, "Type": "Commercial"})
         if st.button("➕ Add Commercial Category"): st.session_state.comm_rows += 1; st.rerun()
 
     # --- PUBLIC SERVICES TAB ---
@@ -136,11 +134,13 @@ def main():
         if st.button("➕ Add Service Row"): st.session_state.service_rows += 1; st.rerun()
 
     # ==========================================
-    # 4. FINAL CALCULATION ENGINE (PF, KVA, DT)
+    # 4. FINAL CALCULATION ENGINE
     # ==========================================
     if all_calculated_items:
         df = pd.DataFrame(all_calculated_items)
         df['Total_Load_kW'] = df['Norms'] * df['Qty']
+        
+        # Calculation Fix: Standardized to 'Load Factor'
         df['Net_Load_kW'] = df['Total_Load_kW'] * df['Load Factor']
         
         grand_total_net_kw = df['Net_Load_kW'].sum()
@@ -151,7 +151,7 @@ def main():
         st.header("📋 Load Assessment Summary")
         display_df = df.copy()
         display_df['Norms'] = display_df['Norms'].apply(lambda x: f"{x:.3f} kW")
-        st.table(display_df[['Description', 'Norms', 'Qty', 'Total_Load_kW', 'Load Load Factor', 'Net_Load_kW']].rename(columns={'Total_Load_kW': 'Total Load (kW)', 'Net_Load_kW': 'Net Load (kW)'}))
+        st.table(display_df[['Description', 'Norms', 'Qty', 'Total_Load_kW', 'Load Factor', 'Net_Load_kW']].rename(columns={'Total_Load_kW': 'Total Load (kW)', 'Net_Load_kW': 'Net Load (kW)'}))
 
         # SUMMARY CARDS
         res_col1, res_col2, res_col3, res_col4 = st.columns(4)
